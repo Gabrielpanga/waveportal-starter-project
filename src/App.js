@@ -44,7 +44,7 @@ export default function App() {
   const [allWaves, setAllWaves] = useState([]);
   const [message, setMessage] = useState("");
 
-  const contractAddress = "0xe4AB1B41Ddb2089154ee07018074BC7370dF2c93";
+  const contractAddress = "0xC35B89e43bE7DF4A81a8644087aA7719db52C4eb";
   const contractABI = abi.abi;
 
   const getTotalWaves = useCallback(async () => {
@@ -154,7 +154,7 @@ export default function App() {
 
       await waveTxn.wait();
       console.log("Mined -- ", waveTxn.hash);
-
+      setMessage("");
       await Promise.all([getTotalWaves(), getAllWaves()]);
     } catch (error) {
       console.log(error);
@@ -179,6 +179,40 @@ export default function App() {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    let wavePortalContract;
+
+    const onNewWave = (from, timestamp, message) => {
+      console.log("NewWave", from, timestamp, message);
+      setAllWaves((prevState) => [
+        ...prevState,
+        {
+          address: from,
+          timestamp: new Date(timestamp * 1000),
+          message: message,
+        },
+      ]);
+    };
+
+    if (window.ethereum) {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      wavePortalContract = new ethers.Contract(
+        contractAddress,
+        contractABI,
+        signer
+      );
+      wavePortalContract.on("NewWave", onNewWave);
+    }
+
+    return () => {
+      if (wavePortalContract) {
+        wavePortalContract.off("NewWave", onNewWave);
+      }
+    };
+  });
 
   return (
     <div className="mainContainer">
