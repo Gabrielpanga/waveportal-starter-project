@@ -212,7 +212,7 @@ export default function App() {
         wavePortalContract.off("NewWave", onNewWave);
       }
     };
-  });
+  }, [setAllWaves, contractABI]);
 
   return (
     <div className="mainContainer">
